@@ -1,0 +1,11 @@
+[template]
+src = "production.tmpl"
+dest = "config/production.json"
+keys = [
+  "/config/global/redis/host", 
+  "/config/global/redis/port", 
+  "/config/locker/host", 
+	"/config/locker/port", 
+  "/config/locker/logging/level", 
+  "/config/locker/logging/dateformat"
+]

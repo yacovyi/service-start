@@ -1,0 +1,145 @@
+swagger: '2.0'
+info:
+  description: >-
+    Writing a (gg) service from scratch.
+  title: Tutorial Service
+  version: 0.1.0
+basePath: "/"
+paths: 
+  '/locking/resources/lock/{resourceId}':
+    x-swagger-router-controller: lockingController
+    get:
+      tags:
+      - "Lock Status"
+      description: Gets whether the requested resource is locked, by resource id.
+      operationId: getIsLockedByResourceIdAsync
+      produces:
+        - application/json
+      parameters:
+      - in: "path"
+        name: "resourceId"
+        type: string
+        required: true
+        description: The id of the resource to query.
+      responses:
+        200:
+          description: OK
+          schema:
+            type: boolean
+        400:
+          $ref: '#/responses/BadRequest'
+        500:
+          $ref: '#/responses/InternalServerError'
+    post:
+      tags:
+      - "Lock"
+      description: Tries to lock a resource by resource id.
+      operationId: tryLockResourceByIdAsync
+      produces:
+        - application/json
+      parameters:
+      - in: "path"
+        name: "resourceId"
+        type: string
+        required: true
+        description: The id of the resource to lock.
+      - in: query
+        name: ttl
+        type: integer
+        required: true
+        minimum: 1
+        maximum: 120000
+        description: The ttl in ms to apply.
+      responses:
+        200:
+          description: On success returns lock token.
+          schema:
+            type: "string"
+        400:
+          $ref: '#/responses/BadRequest'
+        500:
+          $ref: '#/responses/InternalServerError'
+          
+  '/locking/resources/renewlease':
+    x-swagger-router-controller: lockingController
+    post:
+      tags:
+      - "Renew Lease"
+      description: Tries to renew the lock lease.
+      operationId: tryRenewLockLease
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+      - in: "body"
+        name: "renewRequest"
+        schema:
+          $ref: '#/definitions/lockRenewRequest'
+        required: true
+        description: The renew request object.
+      responses:
+        200:
+          description: OK
+          schema:
+            type: boolean
+        400:
+          $ref: '#/responses/BadRequest'
+        500:
+          $ref: '#/responses/InternalServerError'
+          
+  '/locking/resources/unlock/{resourceId}/{token}':
+    x-swagger-router-controller: lockingController
+    post:
+      tags:
+      - "Unlock"
+      description: Tries to unlock a resource by resource id.
+      operationId: tryUnlockResourceByIdAsync
+      produces:
+        - application/json
+      parameters:
+      - in: "path"
+        name: "resourceId"
+        type: string
+        required: true
+        description: The id of the resource to unlock.
+      - in: "path"
+        name: "token"
+        type: string
+        required: true
+        description: The token provided on lock.
+      responses:
+        200:
+          $ref: '#/responses/OK' 
+        404:
+          $ref: '#/responses/ResourceNotFound'
+
+responses:
+  OK:
+    description: OK
+  BadRequest:
+    description: Bad Requested
+    schema:
+      type: string
+  InternalServerError:
+    description: An internal error occured.
+    schema:
+      type: string
+  ResourceNotFound:
+    description: The requested resource was not found on the server.
+
+definitions:
+  lockRenewRequest:
+    type: "object"
+    properties:
+      token:
+        type: string
+        description: The token that was provided
+      resourceId:
+        type: string
+        description: The id of the requested resource.
+      ttl:
+        type: integer
+        description: Lock ttl in ms.
+
+  
